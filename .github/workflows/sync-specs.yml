@@ -1,0 +1,70 @@
+name: OpenSpec to GitHub Issues Sync
+
+on:
+  workflow_call:
+    inputs:
+      specs_dir:
+        description: 'Directory containing spec markdown files'
+        default: 'openspec/specs'
+        required: false
+        type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: false
+  workflow_dispatch:
+    inputs:
+      specs_dir:
+        description: 'Directory containing spec markdown files'
+        default: 'openspec/specs'
+        required: false
+        type: string
+
+jobs:
+  sync:
+    name: Sync OpenSpec to GitHub Issues
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN || github.token }}
+          fetch-depth: 0
+
+      - name: Checkout tooling repository
+        uses: actions/checkout@v4
+        with:
+          repository: markusbrand/openspec-workflows
+          ref: v1
+          path: .openspec-workflows-tooling
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run OpenSpec Synchronization
+        run: node .openspec-workflows-tooling/scripts/sync-specs.mjs --dir "${{ inputs.specs_dir || 'openspec/specs' }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Clean up tooling directory
+        if: always()
+        run: rm -rf .openspec-workflows-tooling
+
+      - name: Commit and push updated issue numbers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          TARGET_DIR="${{ inputs.specs_dir || 'openspec/specs' }}"
+          if [[ -n $(git status --porcelain "$TARGET_DIR") ]]; then
+            git add "$TARGET_DIR"
+            git commit -m "chore(openspec): synchronize issue numbers [skip ci]"
+            git push
+          else
+            echo "No issue numbers updated in specifications."
+          fi
