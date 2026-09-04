@@ -241,6 +241,11 @@ function fetchExistingIssues() {
 
 // GraphQL helper for Sub-issues
 function linkSubIssueGraphQL(epicNumber, subIssueNumber) {
+  if (dryRun) {
+    console.log(`[DRY RUN] Would link Sub-issue #${subIssueNumber} to Epic #${epicNumber} via GitHub Sub-issues API.`);
+    return true;
+  }
+
   const [owner, name] = repo.split('/');
   const query = `
     query($owner: String!, $name: String!, $epicNum: Int!, $subNum: Int!) {
