@@ -8,9 +8,6 @@ on:
         default: 'openspec/specs'
         required: false
         type: string
-    secrets:
-      GITHUB_TOKEN:
-        required: false
   workflow_dispatch:
     inputs:
       specs_dir:

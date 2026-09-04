@@ -36,8 +36,6 @@ jobs:
       contents: write
       issues: write
     uses: markusbrand/openspec-workflows/.github/workflows/sync-specs.yml@v1
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### 2. Specification Frontmatter Schema
